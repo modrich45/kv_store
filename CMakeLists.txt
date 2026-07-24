@@ -4,14 +4,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(
-    kv-store
-    src/main.cpp
-    src/kv/kv_store.cpp
-)
+enable_testing()
 
-target_include_directories(
-    kv-store
-    PRIVATE
-    include
-)
+add_subdirectory(src)
+add_subdirectory(app)
+add_subdirectory(tests)
