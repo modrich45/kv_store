@@ -12,7 +12,7 @@ public:
 
     std::optional<std::string> get(std::string key) const;
 
-    bool remove(std::string key);
+    bool remove(const std::string& key);
 
     bool exists(std::string key) const;
 

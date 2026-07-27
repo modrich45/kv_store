@@ -15,11 +15,11 @@ std::optional<std::string> KVStore::get(std::string key) const
     return std::nullopt;
 }
 
-bool KVStore::remove(const std::string key)
+bool KVStore::remove(const std::string& key)
 {
     auto it = store_.find(key);
 
-    if (it != store_.end());
+    if (it != store_.end())
     {
         store_.erase(it);
         return true;
