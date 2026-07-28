@@ -12,8 +12,8 @@
 
 ---
 
-## Phase 2
-- [ ] Unit Testing (GoogleTest)
+## Phase 2 ✅
+- [x] Unit Testing (GoogleTest)
 
 ---
 
