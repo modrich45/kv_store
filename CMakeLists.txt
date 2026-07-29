@@ -26,6 +26,7 @@ target_include_directories(
 add_executable(
     kv-store
     src/main.cpp
+    # src/kv/snapshot.cpp
 )
 
 target_link_libraries(
@@ -39,6 +40,7 @@ target_link_libraries(
 add_executable(
     kv-store-tests
     tests/kv_store_test.cpp
+    # tests/snapshot_test.cpp
 )
 
 target_link_libraries(
