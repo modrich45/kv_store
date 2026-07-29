@@ -6,6 +6,7 @@
 class KVStore {
 private:
     std::unordered_map<std::string, std::string> store_;
+    Snapshot snapshot_;
 
 public:
     void set(std::string key,std::string value);

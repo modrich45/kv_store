@@ -161,3 +161,43 @@ TEST(KVStoreTest, ClearAfterRemovals)
 
     EXPECT_EQ(store.size(),0);
 }
+TEST(KVStoreTest, SetEmptyKey)
+{
+    KVStore store;
+
+    store.set("", "value");
+
+    EXPECT_EQ(store.size(),0);
+}
+TEST(KVStoreTest, SetKeyWithEqualSign)
+{
+    KVStore store;
+
+    store.set("key=with=equal", "value");
+
+    EXPECT_EQ(store.size(),0);
+}
+TEST(KVStoreTest, SetKeyWithNewline)
+{
+    KVStore store;
+
+    store.set("key\nwith\nnewline", "value");
+
+    EXPECT_EQ(store.size(),0);
+}
+TEST(KVStoreTest, SetEmptyValue)
+{
+    KVStore store;
+
+    store.set("key", "");
+
+    EXPECT_EQ(store.size(),0);
+}
+TEST(KVStoreTest, SetValueWithNewline)
+{
+    KVStore store;
+
+    store.set("key", "value\nwith\nnewline");
+
+    EXPECT_EQ(store.size(),0);
+}
