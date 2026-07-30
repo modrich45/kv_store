@@ -1,101 +1,84 @@
-#include<gtest/gtest.h>
-#include<kv/snapshot.h>
+#include <filesystem>
+#include <gtest/gtest.h>
+#include <kv/snapshot.h>
 
-TEST(SnapshotTest, SaveAndLoad)
+class SnapshotTest : public ::testing::Test
 {
+protected:
+    const std::string snapshot_file = "test_snapshot_only.txt";
+    const std::string empty_snapshot_file = "test_snapshot_empty.txt";
 
-    std::unordered_map<std::string, std::string> data = {
+    std::unordered_map<std::string, std::string> sample_data{
         {"name", "Vishal"},
         {"age", "30"},
         {"city", "New York"}
     };
 
-    Snapshot snapshot("test_snapshot_only.txt");
+    void SetUp() override
+    {
+        std::filesystem::remove(snapshot_file);
+        std::filesystem::remove(empty_snapshot_file);
+    }
+
+    void TearDown() override
+    {
+        std::filesystem::remove(snapshot_file);
+        std::filesystem::remove(empty_snapshot_file);
+    }
+};
+
+TEST_F(SnapshotTest, SaveAndLoad)
+{
+
+    Snapshot snapshot(snapshot_file);
 
     // Save the data to a file
-    ASSERT_TRUE(snapshot.save(data));
+    ASSERT_TRUE(snapshot.save(sample_data));
 
     // Clear the original data
-    data.clear();
+    sample_data.clear();
 
     // Load the data from the file
-    ASSERT_TRUE(snapshot.load(data));
+    ASSERT_TRUE(snapshot.load(sample_data));
 
     // Verify that the loaded data matches the original data
-    EXPECT_EQ(data.size(), 3);
-    EXPECT_EQ(data["name"], "Vishal");
-    EXPECT_EQ(data["age"], "30");
-    EXPECT_EQ(data["city"], "New York");
+    EXPECT_EQ(sample_data.size(), 3);
+    EXPECT_EQ(sample_data["name"], "Vishal");
+    EXPECT_EQ(sample_data["age"], "30");
+    EXPECT_EQ(sample_data["city"], "New York");
 }
 
-TEST(SnapshotTest, LoadNonExistingFile)
+TEST_F(SnapshotTest, LoadNonExistingFile)
 {
-    std::unordered_map<std::string, std::string> data;
-
     Snapshot snapshot("non_existing_file.txt");
 
     // Attempt to load data from a non-existing file
-    ASSERT_FALSE(snapshot.load(data));
+    ASSERT_FALSE(snapshot.load(sample_data));
 
     // Verify that the data remains empty
-    EXPECT_TRUE(data.empty());
+    EXPECT_TRUE(sample_data.empty());
 }
 
-TEST(SnapshotTest, SaveToInvalidFile)
+TEST_F(SnapshotTest, SaveToInvalidFile)
 {
-    std::unordered_map<std::string, std::string> data = {
-        {"name", "Vishal"},
-        {"age", "30"},
-        {"city", "New York"}
-    };
-
     // Attempt to save data to an invalid file path
     Snapshot snapshot("/invalid_path/test_snapshot.txt");
-    ASSERT_FALSE(snapshot.save(data));
+    ASSERT_FALSE(snapshot.save(sample_data));
 }
 
-TEST(SnapshotTest, SaveOnly){
-    
-    std::unordered_map<std::string, std::string> data = {
-        {"name", "Vishal"},
-        {"age", "30"},
-        {"city", "New York"}
-    };
-
-    Snapshot snapshot("test_snapshot_only.txt");
-
-    // Save the data to a file
-    ASSERT_TRUE(snapshot.save(data));
-}
-
-TEST(SnapshotTest, LoadOnly){
-    
-    std::unordered_map<std::string, std::string> data;
-
-    Snapshot snapshot("test_snapshot_only.txt");
-
-    // Load the data from the file
-    ASSERT_TRUE(snapshot.load(data));
-
-    // Verify that the loaded data matches the original data
-    EXPECT_EQ(data.size(), 3);
-    EXPECT_EQ(data["name"], "Vishal");
-    EXPECT_EQ(data["age"], "30");
-    EXPECT_EQ(data["city"], "New York");
-}
-
-TEST(SnapshotTest, SaveAndLoadEmptyData)
+TEST_F(SnapshotTest, SaveAndLoadEmptyData)
 {
-    std::unordered_map<std::string, std::string> data;
 
-    Snapshot snapshot("test_snapshot_empty.txt");
+    Snapshot snapshot(empty_snapshot_file);
+
+    sample_data.clear(); // Ensure the data is empty
 
     // Save the empty data to a file
-    ASSERT_TRUE(snapshot.save(data));
+    ASSERT_TRUE(snapshot.save(sample_data));
 
     // Load the data from the file
-    ASSERT_TRUE(snapshot.load(data));
+    ASSERT_TRUE(snapshot.load(sample_data));
 
     // Verify that the loaded data is still empty
-    EXPECT_TRUE(data.empty());
+    EXPECT_TRUE(sample_data.empty());
 }
