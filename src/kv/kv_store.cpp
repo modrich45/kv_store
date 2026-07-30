@@ -60,3 +60,8 @@ void KVStore::clear()
 {
     store_.clear();
 }
+
+bool KVStore::saveSnapshot()
+{
+    return snapshot_.save(store_);
+}

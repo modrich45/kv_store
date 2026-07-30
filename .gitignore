@@ -2,3 +2,4 @@
 .vscode/
 test_snapshot_empty.txt
 test_snapshot_only.txt
+test_snapshot.txt
