@@ -13,6 +13,7 @@ add_subdirectory(external/googletest)
 add_library(
     kvstore_lib
     src/kv/kv_store.cpp
+    src/kv/snapshot.cpp
 )
 
 target_include_directories(
@@ -26,7 +27,6 @@ target_include_directories(
 add_executable(
     kv-store
     src/main.cpp
-    # src/kv/snapshot.cpp
 )
 
 target_link_libraries(
@@ -40,7 +40,7 @@ target_link_libraries(
 add_executable(
     kv-store-tests
     tests/kv_store_test.cpp
-    # tests/snapshot_test.cpp
+    tests/snapshot_test.cpp
 )
 
 target_link_libraries(

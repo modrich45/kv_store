@@ -1,5 +1,9 @@
 #include <kv/kv_store.h>
 
+KVStore::KVStore(const std::string filename) : snapshot_(filename) {
+    snapshot_.load(store_);
+}
+
 void KVStore::set(std::string key, std::string value)
 {   
     if(key.empty()){

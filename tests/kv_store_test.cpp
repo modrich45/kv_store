@@ -1,203 +1,191 @@
 #include <gtest/gtest.h>
-
+#include <filesystem>
 #include "kv/kv_store.h"
 
-TEST(KVStoreTest, InsertNewKey)
+class KVStoreTest : public ::testing::Test
 {
-    KVStore store;
+protected:
+    const std::string filename = "test_snapshot.txt";
+    std::unique_ptr<KVStore> store;
 
-    store.set("name", "Vishal");
+    void SetUp() override
+    {
+        std::filesystem::remove(filename);
+        store = std::make_unique<KVStore>(filename);
+    }
 
-    auto value = store.get("name");
+    void TearDown() override
+    {
+        store.reset();
+        std::filesystem::remove(filename);
+    }
+};
+
+TEST_F(KVStoreTest, InsertNewKey)
+{
+    store->set("name", "Vishal");
+
+    auto value = store->get("name");
 
     ASSERT_TRUE(value.has_value());
 
     EXPECT_EQ(value.value(), "Vishal");
-
-    EXPECT_EQ(store.size(),1);
+    EXPECT_EQ(store->size(), 1);
 }
 
-TEST(KVStoreTest, UpdateExistingKey)
+TEST_F(KVStoreTest, UpdateExistingKey)
 {
-    KVStore store;
+    store->set("name", "Vishal");
 
-    store.set("name", "Vishal");
+    store->set("name", "Vishal");
 
-    store.set("name", "John");
+    store->set("name", "John");
 
-    auto value = store.get("name");
+    auto value = store->get("name");
 
     ASSERT_TRUE(value.has_value());
 
     EXPECT_EQ(value.value(), "John");
 
-    EXPECT_EQ(store.size(),1);
+    EXPECT_EQ(store->size(), 1);
 }
 
-TEST(KVStoreTest, RemoveKey)
+TEST_F(KVStoreTest, RemoveKey)
 {
-    KVStore store;
+    store->set("name", "Vishal");
 
-    store.set("name", "Vishal");
-
-    bool removed = store.remove("name");
+    bool removed = store->remove("name");
 
     EXPECT_TRUE(removed);
 
-    auto value = store.get("name");
+    auto value = store-> get("name");
 
     EXPECT_FALSE(value.has_value());
 
-    EXPECT_EQ(store.size(),0);
+    EXPECT_EQ(store->size(), 0);
 }
 
-TEST(KVStoreTest, RemoveNonExistingKey)
+TEST_F(KVStoreTest, RemoveNonExistingKey)
 {
-    KVStore store;
-
-    bool removed = store.remove("name");
+    bool removed = store->remove("name");
 
     EXPECT_FALSE(removed);
 
-    EXPECT_EQ(store.size(),0);
+    EXPECT_EQ(store->size(), 0);
 }
 
-TEST(KVStoreTest, KeyExists)
+TEST_F(KVStoreTest, KeyExists)
 {
-    KVStore store;
+    store->set("name", "Vishal");
 
-    store.set("name", "Vishal");
+    EXPECT_TRUE(store->exists("name"));
 
-    EXPECT_TRUE(store.exists("name"));
-
-    EXPECT_FALSE(store.exists("age"));
+    EXPECT_FALSE(store->exists("age"));
 }
 
-TEST(KVStoreTest, ClearStore)
+TEST_F(KVStoreTest, ClearStore)
 {
-    KVStore store;
+    store->set("name", "Vishal");
+    store->set("age", "30");
 
-    store.set("name", "Vishal");
-    store.set("age", "30");
+    EXPECT_EQ(store->size(), 2);
 
-    EXPECT_EQ(store.size(),2);
+    store->clear();
 
-    store.clear();
-
-    EXPECT_EQ(store.size(),0);
+    EXPECT_EQ(store->size(), 0);
 }
 
-TEST(KVStoreTest, GetNonExistingKey)
+TEST_F(KVStoreTest, GetNonExistingKey)
 {
-    KVStore store;
-
-    auto value = store.get("name");
+    auto value = store->get("name");
 
     EXPECT_FALSE(value.has_value());
 }
 
-TEST(KVStoreTest, SizeOfEmptyStore)
+TEST_F(KVStoreTest, SizeOfEmptyStore)
 {
-    KVStore store;
-
-    EXPECT_EQ(store.size(),0);
+    EXPECT_EQ(store->size(), 0);
 }
 
-TEST(KVStoreTest, SizeAfterMultipleInsertions)
+TEST_F(KVStoreTest, SizeAfterMultipleInsertions)
 {
-    KVStore store;
 
-    store.set("name", "Vishal");
-    store.set("age", "30");
-    store.set("city", "New York");
+    store->set("name", "Vishal");
+    store->set("age", "30");
+    store->set("city", "New York");
 
-    EXPECT_EQ(store.size(),3);
+    EXPECT_EQ(store->size(), 3);
 }
 
-TEST(KVStoreTest, SizeAfterRemovals)
+TEST_F(KVStoreTest, SizeAfterRemovals)
 {
-    KVStore store;
+    store->set("name", "Vishal");
+    store->set("age", "30");
+    store->set("city", "New York");
 
-    store.set("name", "Vishal");
-    store.set("age", "30");
-    store.set("city", "New York");
+    EXPECT_EQ(store->size(), 3);
 
-    EXPECT_EQ(store.size(),3);
+    store->remove("age");
 
-    store.remove("age");
+    EXPECT_EQ(store->size(), 2);
 
-    EXPECT_EQ(store.size(),2);
+    store->remove("name");
 
-    store.remove("name");
-
-    EXPECT_EQ(store.size(),1);
+    EXPECT_EQ(store->size(), 1);
 }
 
-TEST(KVStoreTest, ClearEmptyStore)
+TEST_F(KVStoreTest, ClearEmptyStore)
 {
-    KVStore store;
+    EXPECT_EQ(store->size(), 0);
 
-    EXPECT_EQ(store.size(),0);
+    store->clear();
 
-    store.clear();
-
-    EXPECT_EQ(store.size(),0);
+    EXPECT_EQ(store->size(), 0);
 }
 
-TEST(KVStoreTest, ClearAfterRemovals)
+TEST_F(KVStoreTest, ClearAfterRemovals)
 {
-    KVStore store;
+    store->set("name", "Vishal");
+    store->set("age", "30");
 
-    store.set("name", "Vishal");
-    store.set("age", "30");
+    EXPECT_EQ(store->size(), 2);
 
-    EXPECT_EQ(store.size(),2);
+    store->remove("age");
 
-    store.remove("age");
+    EXPECT_EQ(store->size(), 1);
 
-    EXPECT_EQ(store.size(),1);
+    store->clear();
 
-    store.clear();
-
-    EXPECT_EQ(store.size(),0);
+    EXPECT_EQ(store->size(), 0);
 }
-TEST(KVStoreTest, SetEmptyKey)
+TEST_F(KVStoreTest, SetEmptyKey)
 {
-    KVStore store;
 
-    store.set("", "value");
+    store->set("", "value");
 
-    EXPECT_EQ(store.size(),0);
+    EXPECT_EQ(store->size(), 0);
 }
-TEST(KVStoreTest, SetKeyWithEqualSign)
+TEST_F(KVStoreTest, SetKeyWithEqualSign)
 {
-    KVStore store;
+    store->set("key=with=equal", "value");
 
-    store.set("key=with=equal", "value");
-
-    EXPECT_EQ(store.size(),0);
+    EXPECT_EQ(store->size(), 0);
 }
-TEST(KVStoreTest, SetKeyWithNewline)
+TEST_F(KVStoreTest, SetKeyWithNewline)
 {
-    KVStore store;
+    store->set("key\nwith\nnewline", "value");
 
-    store.set("key\nwith\nnewline", "value");
-
-    EXPECT_EQ(store.size(),0);
+    EXPECT_EQ(store->size(), 0);
 }
-TEST(KVStoreTest, SetEmptyValue)
+TEST_F(KVStoreTest, SetEmptyValue)
 {
-    KVStore store;
+    store->set("key", "");
 
-    store.set("key", "");
-
-    EXPECT_EQ(store.size(),0);
+    EXPECT_EQ(store->size(), 0);
 }
-TEST(KVStoreTest, SetValueWithNewline)
+TEST_F(KVStoreTest, SetValueWithNewline)
 {
-    KVStore store;
+    store->set("key", "value\nwith\nnewline");
 
-    store.set("key", "value\nwith\nnewline");
-
-    EXPECT_EQ(store.size(),0);
+    EXPECT_EQ(store->size(), 0);
 }
