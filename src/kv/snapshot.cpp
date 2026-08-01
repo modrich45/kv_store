@@ -1,55 +1,46 @@
+#include <string>
+#include <unordered_map>
 #include <kv/snapshot.h>
+#include<fstream>
 
-Snapshot::Snapshot(const std::string& filename) : filename_(std::move(filename)) {}
+Snapshot::Snapshot(const std::string& filename) : filename_(filename) {}
 
-bool Snapshot::save(const std::unordered_map<std::string, std::string> &data) const
-{
-    std::ofstream file(filename_, std::ios::trunc);
+bool Snapshot::save(const std::unordered_map<std::string, std::string>& data) const{
+    std::ofstream file(filename_,std::ios::binary|std::ios::trunc);
 
-    if (file.is_open())
-    {
-        for (const auto &pair : data)
-        {
-            file << pair.first
-                 << '='
-                 << pair.second
-                 << '\n';
-        }
+    char c='=';
+
+    if(!file.is_open()) return false;
+
+    for (const auto& [key, value] : data){
+        file.write(key.data(), key.size());
+        file.put('=');
+        file.write(value.data(), value.size());
+        file.put('\n');
     }
-    else
-    {
-        return false;
-    }
+
+    file.close();
 
     return true;
 }
 
-bool Snapshot::load(std::unordered_map<std::string, std::string> &data) const
-{
+bool Snapshot::load(std::unordered_map<std::string, std::string>& data) const{
+    std::ifstream file(filename_,std::ios::binary);
+
     data.clear();
-    std::ifstream file(filename_);
+    if(!file.is_open()) return false;
 
-    if (file.is_open())
-    {
+    std::string line;
 
-        std::string line;
-        while (std::getline(file, line))
-        {
-            auto delimiterPos = line.find("=");
-            if (delimiterPos == std::string::npos)
-            {
+    while(std::getline(file,line)){
+        auto delimiterPos=line.find('=');
 
-                continue;
-            }
-            auto key = line.substr(0, delimiterPos);
-            auto value = line.substr(delimiterPos + 1);
-            data[key] = value;
-        }
+        if(delimiterPos==std::string::npos) return false;
+
+        data[line.substr(0,delimiterPos)]=line.substr(delimiterPos+1);
     }
-    else
-    {
-        return false;
-    }
+
+    file.close();
 
     return true;
 }
