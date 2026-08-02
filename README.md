@@ -10,3 +10,13 @@ A production-style in-memory key-value store built in Modern C++20.
 - TCP Server
 - Replication
 - Sharding
+
+## Format
+
+- **Snapshot**
+    key=value
+
+- **WAL**
+    SET key value
+    REMOVE key
+    CLEAR

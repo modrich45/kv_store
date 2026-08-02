@@ -17,7 +17,7 @@ protected:
     void SetUp() override
     {
         std::filesystem::remove(snapshot_file);
-        std::filesystem::remove(empty_snapshot_file);
+        std::filesystem::remove(empty_snapshot_file);     
     }
 
     void TearDown() override

@@ -14,6 +14,7 @@ add_library(
     kvstore_lib
     src/kv/kv_store.cpp
     src/kv/snapshot.cpp
+    src/kv/wal.cpp
 )
 
 target_include_directories(
@@ -41,6 +42,7 @@ add_executable(
     kv-store-tests
     tests/kv_store_test.cpp
     tests/snapshot_test.cpp
+    tests/wal_test.cpp
 )
 
 target_link_libraries(

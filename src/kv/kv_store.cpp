@@ -1,7 +1,8 @@
 #include <kv/kv_store.h>
 
-KVStore::KVStore(const std::string filename) : snapshot_(filename) {
+KVStore::KVStore(const std::string& filename, const std:: string& wal_filename) : snapshot_(filename),wal_(wal_filename) {
     snapshot_.load(store_);
+    wal_.recover(store_);
 }
 
 void KVStore::set(std::string key, std::string value)
@@ -21,6 +22,11 @@ void KVStore::set(std::string key, std::string value)
     if(value.find('\n') != std::string::npos){
         return;
     }
+
+    // need to handle key and values with spaces in wal.
+
+    if(!wal_.logSet(key,value)) return;
+
     store_[key] = value;
 }
 
@@ -40,9 +46,12 @@ bool KVStore::remove(const std::string& key)
 
     if (it != store_.end())
     {
+        if(!wal_.logRemove(key)) return false;
         store_.erase(it);
+
         return true;
     }
+
     return false;
 }
 
@@ -58,10 +67,14 @@ std::size_t KVStore::size() const
 
 void KVStore::clear()
 {
+    if(!wal_.logClear()) return;
+
     store_.clear();
 }
 
 bool KVStore::saveSnapshot()
 {
-    return snapshot_.save(store_);
+    if(!snapshot_.save(store_)) return false;
+
+    return wal_.clear();
 }
