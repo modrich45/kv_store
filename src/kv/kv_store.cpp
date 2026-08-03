@@ -1,24 +1,41 @@
 #include <kv/kv_store.h>
 
-KVStore::KVStore(const std::string filename) : snapshot_(filename) {
+KVStore::KVStore(const std::string snapshot_filename, const std::string wal_filename) : snapshot_(snapshot_filename), wal_(wal_filename)
+{
     snapshot_.load(store_);
+    wal_.replay(store_);
+    wal_.clear();
+    snapshot_.save(store_);
 }
 
 void KVStore::set(std::string key, std::string value)
-{   
-    if(key.empty()){
+{
+    if (key.empty())
+    {
         return;
     }
-    if(key.find('=') != std::string::npos){
+    if (key.find(' ') != std::string::npos)
+    {
         return;
     }
-    if(key.find('\n') != std::string::npos){
+    if (key.find('=') != std::string::npos)
+    {
         return;
     }
-    if(value.empty()){
+    if (key.find('\n') != std::string::npos)
+    {
         return;
     }
-    if(value.find('\n') != std::string::npos){
+    if (value.empty())
+    {
+        return;
+    }
+    if (value.find('\n') != std::string::npos)
+    {
+        return;
+    }
+    if (!wal_.logSet(key, value))
+    {
         return;
     }
     store_[key] = value;
@@ -34,9 +51,14 @@ std::optional<std::string> KVStore::get(std::string key) const
     return std::nullopt;
 }
 
-bool KVStore::remove(const std::string& key)
+bool KVStore::remove(const std::string &key)
 {
     auto it = store_.find(key);
+
+    if (!wal_.logRemove(key))
+    {
+        return false;
+    }
 
     if (it != store_.end())
     {
@@ -58,10 +80,20 @@ std::size_t KVStore::size() const
 
 void KVStore::clear()
 {
+    if (!wal_.logClear())
+    {
+        return;
+    }
     store_.clear();
 }
 
 bool KVStore::saveSnapshot()
 {
-    return snapshot_.save(store_);
+    if (!snapshot_.save(store_))
+        return false;
+
+    if (!wal_.clear())
+        return false;
+
+    return true;
 }

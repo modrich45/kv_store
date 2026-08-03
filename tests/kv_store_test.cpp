@@ -6,18 +6,21 @@ class KVStoreTest : public ::testing::Test
 {
 protected:
     const std::string filename = "test_snapshot.txt";
+    const std::string wal_filename = "test_wal.txt";
     std::unique_ptr<KVStore> store;
 
     void SetUp() override
     {
         std::filesystem::remove(filename);
-        store = std::make_unique<KVStore>(filename);
+        std::filesystem::remove(wal_filename);
+        store = std::make_unique<KVStore>(filename, wal_filename);
     }
 
     void TearDown() override
     {
         store.reset();
         std::filesystem::remove(filename);
+        std::filesystem::remove(wal_filename);
     }
 };
 
@@ -187,5 +190,10 @@ TEST_F(KVStoreTest, SetValueWithNewline)
 {
     store->set("key", "value\nwith\nnewline");
 
+    EXPECT_EQ(store->size(), 0);
+}
+TEST_F(KVStoreTest, SetKeyWithSpace)
+{
+    store->set("key with space", "value");
     EXPECT_EQ(store->size(), 0);
 }

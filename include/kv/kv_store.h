@@ -3,15 +3,17 @@
 #include <string>
 #include <unordered_map>
 #include "snapshot.h"
+#include "WAL.h"
 
 class KVStore {
 private:
     std::unordered_map<std::string, std::string> store_;
     Snapshot snapshot_;
+    WAL wal_;
 
 public:
 
-    explicit KVStore(const std::string filename);
+    explicit KVStore(const std::string snapshot_filename,const std::string wal_filename);
 
     void set(std::string key,std::string value);
 
