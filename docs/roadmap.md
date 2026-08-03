@@ -17,10 +17,10 @@
 
 ---
 
-## Phase 3
-- [ ] Persistence
-- [ ] Write-Ahead Log (WAL)
-- [ ] Snapshotting
+## Phase 3 ✅
+- [x] Persistence
+- [x] Write-Ahead Log (WAL)
+- [x] Snapshotting
 
 ---
 
