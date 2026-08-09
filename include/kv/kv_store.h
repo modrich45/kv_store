@@ -2,6 +2,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include<shared_mutex>
 #include "snapshot.h"
 #include "wal.h"
 
@@ -12,6 +13,8 @@ private:
     Snapshot snapshot_;
 
     WAL wal_;
+
+    mutable std::shared_mutex mutex_;
 
 public:
     /*Constructor*/

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <filesystem>
+#include<thread>
 #include "kv/kv_store.h"
 
 class KVStoreTest : public ::testing::Test
@@ -191,4 +192,92 @@ TEST_F(KVStoreTest, SetValueWithNewline)
     store->set("key", "value\nwith\nnewline");
 
     EXPECT_EQ(store->size(), 0);
+}
+
+// ------------------ Thread tests ------------------------------
+
+TEST_F(KVStoreTest, ConcurrentInsertDifferentKeys)
+{
+    constexpr int numThreads = 10;
+    constexpr int keysPerThread = 100;
+
+    std::vector<std::thread> threads;
+
+    for (int t = 0; t < numThreads; ++t)
+    {
+        threads.emplace_back([&, t]()
+        {
+            for (int i = 0; i < keysPerThread; ++i)
+            {
+                store->set(
+                    "key" + std::to_string(t * keysPerThread + i),
+                    "value");
+            }
+        });
+    }
+
+    for (auto &thread : threads)
+        thread.join();
+
+    EXPECT_EQ(store->size(), numThreads * keysPerThread);
+}
+
+TEST_F(KVStoreTest, ConcurrentReaders){
+    store->set("name", "VishalJi");
+
+    constexpr int numThreads = 20;
+
+    std::vector<std::thread> threads;
+
+    for (int i = 0; i < numThreads; ++i)
+    {
+        threads.emplace_back([&]()
+        {
+            for (int j = 0; j < 1000; ++j)
+            {
+                auto value = store->get("name");
+
+                ASSERT_TRUE(value.has_value());
+
+                EXPECT_EQ(value.value(), "VishalJi");
+            }
+        });
+    }
+
+    for (auto &thread : threads)
+        thread.join();
+}
+
+// This testcase is to ensure that the kv system doesn't crashes
+TEST_F(KVStoreTest, StressTest)
+{
+    constexpr int numThreads = 8;
+    constexpr int operations = 5000;
+
+    std::vector<std::thread> threads;
+
+    for (int t = 0; t < numThreads; ++t)
+    {
+        threads.emplace_back([&, t]()
+        {
+            for (int i = 0; i < operations; ++i)
+            {
+                std::string key = "key" + std::to_string(i % 100);
+
+                store->set(key, std::to_string(t));
+
+                store->get(key);
+
+                store->exists(key);
+
+                if (i % 10 == 0)
+                {
+                    store->remove(key);
+                }
+            }
+        });
+    }
+
+    for (auto &thread : threads)
+        thread.join();
 }
