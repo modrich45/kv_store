@@ -3,6 +3,7 @@
 #include "kv/kv_store.h"
 #include <thread>
 #include <vector>
+#include <atomic>
 
 class KVStoreTest : public ::testing::Test
 {
@@ -63,7 +64,7 @@ TEST_F(KVStoreTest, RemoveKey)
 
     EXPECT_TRUE(removed);
 
-    auto value = store-> get("name");
+    auto value = store->get("name");
 
     EXPECT_FALSE(value.has_value());
 
@@ -200,18 +201,20 @@ TEST_F(KVStoreTest, SetKeyWithSpace)
     EXPECT_EQ(store->size(), 0);
 }
 
-TEST_F(KVStoreTest, ConcurrencyWrite){
+TEST_F(KVStoreTest, ConcurrencyWrite)
+{
     const int num_threads = 10;
 
     std::vector<std::thread> threads;
 
-    for(int i=0;i<num_threads;i++){
-        threads.emplace_back([this, i](){
-            store->set("key" + std::to_string(i), "value" + std::to_string(i));
-        });
+    for (int i = 0; i < num_threads; i++)
+    {
+        threads.emplace_back([this, i]()
+                             { store->set("key" + std::to_string(i), "value" + std::to_string(i)); });
     }
 
-    for(auto& thread : threads){
+    for (auto &thread : threads)
+    {
         thread.join();
     }
 
@@ -223,18 +226,20 @@ TEST_F(KVStoreTest, ConcurrencyWrite){
     }
 }
 
-TEST_F(KVStoreTest, ConcurrencyRead){
+TEST_F(KVStoreTest, ConcurrencyUpdateSameKey)
+{
     const int num_threads = 10;
 
     std::vector<std::thread> threads;
 
-    for(int i=0;i<num_threads;i++){
-        threads.emplace_back([this, i](){
-            store->set("key", "value"+ std::to_string(i));
-        });
+    for (int i = 0; i < num_threads; i++)
+    {
+        threads.emplace_back([this, i]()
+                             { store->set("key", "value" + std::to_string(i)); });
     }
 
-    for(auto& thread : threads){
+    for (auto &thread : threads)
+    {
         thread.join();
     }
 
@@ -243,29 +248,130 @@ TEST_F(KVStoreTest, ConcurrencyRead){
     auto value = store->get("key");
 
     ASSERT_TRUE(value.has_value());
-
 }
 
-TEST_F(KVStoreTest, ConcurrentReadAndWrite){
+TEST_F(KVStoreTest, ConcurrentReadAndWrite)
+{
     const int num_threads = 10;
 
     std::vector<std::thread> threads;
 
-    for(int i=0;i<num_threads;i++){
-        threads.emplace_back([this, i](){
-            store->set("key"+ std::to_string(i), "value"+ std::to_string(i));
-        });
+    for (int i = 0; i < num_threads; i++)
+    {
+        threads.emplace_back([this, i]()
+                             { store->set("key" + std::to_string(i), "value" + std::to_string(i)); });
     }
 
-    for(int i=0;i<num_threads;i++){
-        threads.emplace_back([this, i](){
-            store->get("key"+ std::to_string(i));
-        });
+    for (int i = 0; i < num_threads; i++)
+    {
+        threads.emplace_back([this, i]()
+                             { store->get("key" + std::to_string(i)); });
     }
 
-    for(auto& thread : threads){
+    for (auto &thread : threads)
+    {
         thread.join();
     }
 
     EXPECT_EQ(store->size(), num_threads);
+}
+
+TEST_F(KVStoreTest, ConcurrentReads)
+{
+    constexpr int num_threads = 10;
+    constexpr int num_iterations = 100;
+
+    store->set("key", "value");
+
+    std::vector<std::thread> threads;
+    std::atomic<bool> success{true};
+
+    for (int i = 0; i < num_threads; ++i)
+    {
+        threads.emplace_back([this, num_iterations, &success]()
+        {
+            for (int j = 0; j < num_iterations; ++j)
+            {
+                auto value = store->get("key");
+
+                if (!value.has_value() || value.value() != "value")
+                {
+                    success = false;
+                    return;
+                }
+            }
+        });
+    }
+
+    for (auto& thread : threads)
+    {
+        thread.join();
+    }
+
+    EXPECT_TRUE(success);
+}
+
+TEST_F(KVStoreTest, ConcurrentReadsAndWrites)
+{
+    constexpr int num_readers = 5;
+    constexpr int num_writers = 5;
+    constexpr int num_iterations = 1000;
+
+    store->set("key", "initial");
+
+    std::vector<std::thread> threads;
+
+    std::atomic<bool> start{false};
+    std::atomic<bool> success{true};
+
+    // Writers
+    for (int i = 0; i < num_writers; ++i)
+    {
+        threads.emplace_back([this, &start, i]()
+        {
+            while (!start.load(std::memory_order_acquire))
+            {
+                std::this_thread::yield();
+            }
+
+            for (int j = 0; j < num_iterations; ++j)
+            {
+                store->set("key", std::to_string(i));
+            }
+        });
+    }
+
+    // Readers
+    for (int i = 0; i < num_readers; ++i)
+    {
+        threads.emplace_back([this, &start, &success]()
+        {
+            while (!start.load(std::memory_order_acquire))
+            {
+                std::this_thread::yield();
+            }
+
+            for (int j = 0; j < num_iterations; ++j)
+            {
+                auto value = store->get("key");
+
+                if (!value.has_value())
+                {
+                    success.store(false, std::memory_order_relaxed);
+                    return;
+                }
+            }
+        });
+    }
+
+    // Start everyone together
+    start.store(true, std::memory_order_release);
+
+    for (auto& thread : threads)
+    {
+        thread.join();
+    }
+
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(store->exists("key"));
 }
