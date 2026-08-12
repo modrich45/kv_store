@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <filesystem>
 #include "kv/kv_store.h"
+#include <thread>
+#include <vector>
 
 class KVStoreTest : public ::testing::Test
 {
@@ -196,4 +198,74 @@ TEST_F(KVStoreTest, SetKeyWithSpace)
 {
     store->set("key with space", "value");
     EXPECT_EQ(store->size(), 0);
+}
+
+TEST_F(KVStoreTest, ConcurrencyWrite){
+    const int num_threads = 10;
+
+    std::vector<std::thread> threads;
+
+    for(int i=0;i<num_threads;i++){
+        threads.emplace_back([this, i](){
+            store->set("key" + std::to_string(i), "value" + std::to_string(i));
+        });
+    }
+
+    for(auto& thread : threads){
+        thread.join();
+    }
+
+    EXPECT_EQ(store->size(), num_threads);
+
+    for (int i = 0; i < num_threads; ++i)
+    {
+        EXPECT_TRUE(store->exists("key" + std::to_string(i)));
+    }
+}
+
+TEST_F(KVStoreTest, ConcurrencyRead){
+    const int num_threads = 10;
+
+    std::vector<std::thread> threads;
+
+    for(int i=0;i<num_threads;i++){
+        threads.emplace_back([this, i](){
+            store->set("key", "value"+ std::to_string(i));
+        });
+    }
+
+    for(auto& thread : threads){
+        thread.join();
+    }
+
+    ASSERT_TRUE(store->exists("key"));
+
+    auto value = store->get("key");
+
+    ASSERT_TRUE(value.has_value());
+
+}
+
+TEST_F(KVStoreTest, ConcurrentReadAndWrite){
+    const int num_threads = 10;
+
+    std::vector<std::thread> threads;
+
+    for(int i=0;i<num_threads;i++){
+        threads.emplace_back([this, i](){
+            store->set("key"+ std::to_string(i), "value"+ std::to_string(i));
+        });
+    }
+
+    for(int i=0;i<num_threads;i++){
+        threads.emplace_back([this, i](){
+            store->get("key"+ std::to_string(i));
+        });
+    }
+
+    for(auto& thread : threads){
+        thread.join();
+    }
+
+    EXPECT_EQ(store->size(), num_threads);
 }

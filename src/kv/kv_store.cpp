@@ -38,11 +38,13 @@ void KVStore::set(std::string key, std::string value)
     {
         return;
     }
+    std::lock_guard<std::mutex> lock(mutex_);
     store_[key] = value;
 }
 
 std::optional<std::string> KVStore::get(std::string key) const
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto it = store_.find(key);
     if (it != store_.end())
     {
@@ -53,6 +55,7 @@ std::optional<std::string> KVStore::get(std::string key) const
 
 bool KVStore::remove(const std::string &key)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto it = store_.find(key);
 
     if (!wal_.logRemove(key))
@@ -70,16 +73,19 @@ bool KVStore::remove(const std::string &key)
 
 bool KVStore::exists(const std::string key) const
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     return store_.find(key) != store_.end();
 }
 
 std::size_t KVStore::size() const
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     return store_.size();
 }
 
 void KVStore::clear()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (!wal_.logClear())
     {
         return;

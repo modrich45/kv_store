@@ -4,12 +4,14 @@
 #include <unordered_map>
 #include "snapshot.h"
 #include "WAL.h"
+#include <mutex>
 
 class KVStore {
 private:
     std::unordered_map<std::string, std::string> store_;
     Snapshot snapshot_;
     WAL wal_;
+    mutable std::mutex mutex_; 
 
 public:
 
