@@ -15,6 +15,7 @@ add_library(
     src/kv/kv_store.cpp
     src/kv/snapshot.cpp
     src/kv/wal.cpp
+    src/server/tcp_server.cpp
 )
 
 target_include_directories(

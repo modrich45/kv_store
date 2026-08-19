@@ -17,25 +17,25 @@
 
 ---
 
-## Phase 3
-- [ ] Persistence
-- [ ] Write-Ahead Log (WAL)
-- [ ] Snapshotting
+## Phase 3 ✅
+- [x] Persistence
+- [x] Write-Ahead Log (WAL)
+- [x] Snapshotting
 
 ---
 
-## Phase 4
-- [ ] Thread Safety
-- [ ] std::mutex
-- [ ] std::shared_mutex
-- [ ] Multi-threaded tests
+## Phase 4 ✅
+- [x] Thread Safety
+- [x] std::mutex
+- [x] std::shared_mutex
+- [x] Multi-threaded tests
 
 ---
 
 ## Phase 5
 - [ ] TCP Server
 - [ ] Client protocol
-- [ ] Command parser
+- [ ] Command parser1
 
 ---
 
