@@ -24,18 +24,39 @@ target_include_directories(
 )
 
 # ---------------- Application ----------------
-
+add_executable(
+    kv-store-server
+    src/TCPServer.cpp
+)
+add_executable(
+    kv-store-client
+    src/TCPClient.cpp
+)
 add_executable(
     kv-store
     src/main.cpp
 )
 
 target_link_libraries(
+    kv-store-server
+    PRIVATE
+    kvstore_lib
+    ws2_32
+)
+
+target_link_libraries(
+    kv-store-client
+    PRIVATE
+    kvstore_lib
+    ws2_32
+)
+
+target_link_libraries(
     kv-store
     PRIVATE
     kvstore_lib
+    ws2_32
 )
-
 # ---------------- Tests ----------------
 
 add_executable(
