@@ -33,7 +33,7 @@
 ---
 
 ## Phase 5
-- [ ] TCP Server
+- [x] TCP Server
 - [ ] Client protocol
 - [ ] Command parser1
 
