@@ -17,6 +17,7 @@ add_library(
     src/kv/wal.cpp
     src/server/tcp_server.cpp
     src/parser/command_parser.cpp
+    src/server/executor.cpp
 )
 
 target_include_directories(
