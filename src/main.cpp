@@ -3,7 +3,7 @@
 int main()
 {   
     std::cout << "KV Store Started !!" << std::endl;
-    KVStore store("test_snapshot.txt", "test_wal.txt");
+    KVStore store("snapshot.txt", "wal.txt");
     // store.set("name", "Vishal");
     // store.set("age", "22");
     // store.set("city", "Noida");

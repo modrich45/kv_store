@@ -54,7 +54,10 @@ int main()
 
     // Send message
     const char *message1 = "SET name Vishal\n";
+
     const char *message2 = "GET name\n";
+
+    const char *message3 = "SET city Mumbai\n";
 
     send(
         client_socket,
@@ -66,6 +69,12 @@ int main()
         client_socket,
         message2,
         static_cast<int>(std::strlen(message2)),
+        0);
+
+    send(
+        client_socket,
+        message3,
+        static_cast<int>(std::strlen(message3)),
         0);
 
     // Cleanup

@@ -2,6 +2,10 @@
 #include <ws2tcpip.h>
 #include <cstring>
 #include <iostream>
+#include <string>
+#include "kv/command_parser.h"
+#include "kv/kv_store.h"
+#include "kv/command_executor.h"
 
 int main()
 {
@@ -71,9 +75,12 @@ int main()
     std::cout << "Client connected!\n";
 
     std::string receive_buffer;
-
+    CommandParser parser;
+    KVStore store("snapshot.txt", "wal.txt");
+    CommandExecutor executor(store);
     // 7. Receive data
-    while (true){
+    while (true)
+    {
         char buffer[1024]{};
 
         int bytes_received = recv(
@@ -88,15 +95,22 @@ int main()
 
             std::string command;
             size_t pos;
-            while((pos = receive_buffer.find('\n')) != std::string::npos)
+            while ((pos = receive_buffer.find('\n')) != std::string::npos)
             {
-                
+
                 command = receive_buffer.substr(0, pos);
                 receive_buffer.erase(0, pos + 1);
 
                 std::cout << "Received command: " << command << "\n";
 
-                // Process the command here
+                Command cmd = parser.parse(command);
+
+                std::cout << "Parsed command: Type = " << static_cast<int>(cmd.type)
+                          << ", Key = " << cmd.key
+                          << ", Value = " << cmd.value << "\n";
+                
+                std::cout << "Response: " << executor.execute(cmd) << std::endl;
+
             }
         }
         else if (bytes_received == 0)

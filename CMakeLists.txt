@@ -15,6 +15,8 @@ add_library(
     src/kv/kv_store.cpp
     src/kv/snapshot.cpp
     src/kv/wal.cpp
+    src/kv/command_parser.cpp
+    src/kv/command_executor.cpp
 )
 
 target_include_directories(
@@ -64,6 +66,7 @@ add_executable(
     tests/kv_store_test.cpp
     tests/snapshot_test.cpp
     tests/wal_test.cpp
+    tests/command_parser_test.cpp
 )
 
 target_link_libraries(

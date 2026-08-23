@@ -4,3 +4,5 @@ test_snapshot_empty.txt
 test_snapshot_only.txt
 test_snapshot.txt
 test_wal.txt
+snapshot.txt
+wal.txt
