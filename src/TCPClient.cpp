@@ -65,17 +65,88 @@ int main()
         static_cast<int>(std::strlen(message1)),
         0);
 
+        char buffer[1024];
+
+    int bytes_received = recv(
+        client_socket,
+        buffer,
+        sizeof(buffer) - 1,
+        0);
+
+    if (bytes_received > 0)
+    {
+        buffer[bytes_received] = '\0';
+
+        std::cout << "Server: "
+                  << buffer
+                  << '\n';
+    }
+    else if (bytes_received == 0)
+    {
+        std::cout << "Server disconnected\n";
+    }
+    else
+    {
+        std::cerr << "Receive failed\n";
+    }
+    send(
+        client_socket,
+        message3,
+        static_cast<int>(std::strlen(message3)),
+        0);
+
+    memset(buffer, 0, sizeof(buffer));
+    bytes_received = recv(
+        client_socket,
+        buffer,
+        sizeof(buffer) - 1,
+        0);
+
+    if (bytes_received > 0)
+    {
+        buffer[bytes_received] = '\0';
+
+        std::cout << "Server: "
+                  << buffer
+                  << '\n';
+    }
+    else if (bytes_received == 0)
+    {
+        std::cout << "Server disconnected\n";
+    }
+    else
+    {
+        std::cerr << "Receive failed\n";
+    }
+
     send(
         client_socket,
         message2,
         static_cast<int>(std::strlen(message2)),
         0);
 
-    send(
+    memset(buffer, 0, sizeof(buffer));
+    bytes_received = recv(
         client_socket,
-        message3,
-        static_cast<int>(std::strlen(message3)),
+        buffer,
+        sizeof(buffer) - 1,
         0);
+    if (bytes_received > 0)
+    {
+        buffer[bytes_received] = '\0';
+
+        std::cout << "Server: "
+                  << buffer
+                  << '\n';
+    }
+    else if (bytes_received == 0)
+    {
+        std::cout << "Server disconnected\n";
+    }
+    else
+    {
+        std::cerr << "Receive failed\n";
+    }
 
     // Cleanup
     closesocket(client_socket);

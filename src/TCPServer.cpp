@@ -105,12 +105,21 @@ int main()
 
                 Command cmd = parser.parse(command);
 
-                std::cout << "Parsed command: Type = " << static_cast<int>(cmd.type)
-                          << ", Key = " << cmd.key
-                          << ", Value = " << cmd.value << "\n";
-                
-                std::cout << "Response: " << executor.execute(cmd) << std::endl;
+                std::string response = executor.execute(cmd);
 
+                response += "\n";
+
+                int bytes_sent = send(
+                    client_fd,
+                    response.c_str(),
+                    static_cast<int>(response.size()),
+                    0);
+
+                if (bytes_sent == SOCKET_ERROR)
+                {
+                    std::cerr << "Send failed\n";
+                    break;
+                }
             }
         }
         else if (bytes_received == 0)
@@ -120,7 +129,10 @@ int main()
         }
         else
         {
-            std::cerr << "Receive failed\n";
+            std::cerr << "Receive failed. Error: "
+                      << WSAGetLastError()
+                      << '\n';
+
             break;
         }
     }

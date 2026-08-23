@@ -8,7 +8,7 @@ std::string CommandExecutor::execute(const Command& command)
     {
     case CommandType::SET:
         store_.set(command.key, command.value);
-        return "OK";
+        return "OK\n";
     case CommandType::GET:
     {
         auto value = store_.get(command.key);
@@ -18,26 +18,26 @@ std::string CommandExecutor::execute(const Command& command)
         }
         else
         {
-            return "Key not found";
+            return "Key not found\n";
         }
     }
     case CommandType::REMOVE:
         if (store_.remove(command.key))
         {
-            return "OK";
+            return "OK\n";
         }
         else
         {
-            return "Key not found";
+            return "Key not found\n";
         }
     case CommandType::EXISTS:
-        return store_.exists(command.key) ? "true" : "false";
+        return store_.exists(command.key) ? "true\n" : "false\n";
     case CommandType::SIZE:
-        return std::to_string(store_.size());
+        return std::to_string(store_.size()) + "\n";
     case CommandType::CLEAR:
         store_.clear();
-        return "OK";
+        return "OK\n";
     default:
-        return "Invalid command";
+        return "Invalid command\n";
     }
 }
