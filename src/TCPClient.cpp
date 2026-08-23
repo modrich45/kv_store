@@ -53,8 +53,8 @@ int main()
     std::cout << "Connected to server!\n";
 
     // Send message
-    const char *message1 = "Hello ";
-    const char *message2 = "Server";
+    const char *message1 = "SET name Vishal\n";
+    const char *message2 = "GET name\n";
 
     send(
         client_socket,

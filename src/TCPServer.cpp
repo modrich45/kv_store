@@ -70,8 +70,10 @@ int main()
 
     std::cout << "Client connected!\n";
 
-    // 7. Receive data
+    std::string receive_buffer;
 
+    // 7. Receive data
+    while (true){
         char buffer[1024]{};
 
         int bytes_received = recv(
@@ -82,21 +84,32 @@ int main()
 
         if (bytes_received > 0)
         {
-            buffer[bytes_received] = '\0';
+            receive_buffer.append(buffer, bytes_received);
 
-            std::cout << "Client says: "
-                      << buffer
-                      << '\n';
+            std::string command;
+            size_t pos;
+            while((pos = receive_buffer.find('\n')) != std::string::npos)
+            {
+                
+                command = receive_buffer.substr(0, pos);
+                receive_buffer.erase(0, pos + 1);
+
+                std::cout << "Received command: " << command << "\n";
+
+                // Process the command here
+            }
         }
         else if (bytes_received == 0)
         {
             std::cout << "Client disconnected\n";
+            break;
         }
         else
         {
             std::cerr << "Receive failed\n";
+            break;
         }
-    
+    }
 
     // 8. Cleanup
     closesocket(client_fd);
