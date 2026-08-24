@@ -6,6 +6,100 @@
 #include "kv/command_parser.h"
 #include "kv/kv_store.h"
 #include "kv/command_executor.h"
+#include <thread>
+#include <functional>
+
+void handle_client(
+    SOCKET client_fd,
+    KVStore &store)
+{
+    std::cout << "Client handler started\n";
+
+    std::string receive_buffer;
+
+    CommandParser parser;
+    CommandExecutor executor(store);
+
+    while (true)
+    {
+        char buffer[1024]{};
+
+        int bytes_received = recv(
+            client_fd,
+            buffer,
+            sizeof(buffer) - 1,
+            0);
+
+        if (bytes_received > 0)
+        {
+            receive_buffer.append(
+                buffer,
+                bytes_received);
+
+            size_t pos;
+
+            while ((pos = receive_buffer.find('\n')) != std::string::npos)
+            {
+                std::string command =
+                    receive_buffer.substr(0, pos);
+
+                receive_buffer.erase(
+                    0,
+                    pos + 1);
+
+                std::cout
+                    << "Received command: "
+                    << command
+                    << '\n';
+
+                Command cmd =
+                    parser.parse(command);
+
+                std::string response =
+                    executor.execute(cmd);
+
+                response += '\n';
+
+                int bytes_sent = send(
+                    client_fd,
+                    response.c_str(),
+                    static_cast<int>(response.size()),
+                    0);
+
+                if (bytes_sent == SOCKET_ERROR)
+                {
+                    std::cerr
+                        << "Send failed: "
+                        << WSAGetLastError()
+                        << '\n';
+
+                    closesocket(client_fd);
+                    return;
+                }
+            }
+        }
+        else if (bytes_received == 0)
+        {
+            std::cout
+                << "Client disconnected\n";
+
+            break;
+        }
+        else
+        {
+            std::cerr
+                << "Receive failed: "
+                << WSAGetLastError()
+                << '\n';
+
+            break;
+        }
+    }
+
+    closesocket(client_fd);
+
+    std::cout << "Client handler stopped\n";
+}
 
 int main()
 {
@@ -59,87 +153,38 @@ int main()
     std::cout << "Server listening on port 8080...\n";
 
     // 6. Accept client
-    SOCKET client_fd = accept(
-        server_fd,
-        nullptr,
-        nullptr);
 
-    if (client_fd == INVALID_SOCKET)
-    {
-        std::cerr << "Accept failed\n";
-        closesocket(server_fd);
-        WSACleanup();
-        return 1;
-    }
-
-    std::cout << "Client connected!\n";
-
-    std::string receive_buffer;
-    CommandParser parser;
     KVStore store("snapshot.txt", "wal.txt");
-    CommandExecutor executor(store);
-    // 7. Receive data
+
+    // 7. Handle clients in separate threads
     while (true)
     {
-        char buffer[1024]{};
+        SOCKET client_fd = accept(
+            server_fd,
+            nullptr,
+            nullptr);
 
-        int bytes_received = recv(
+        if (client_fd == INVALID_SOCKET)
+        {
+            std::cerr
+                << "Accept failed: "
+                << WSAGetLastError()
+                << '\n';
+
+            continue;
+        }
+
+        std::cout
+            << "Client connected!\n";
+
+        std::thread client_thread(
+            handle_client,
             client_fd,
-            buffer,
-            sizeof(buffer) - 1,
-            0);
+            std::ref(store));
 
-        if (bytes_received > 0)
-        {
-            receive_buffer.append(buffer, bytes_received);
-
-            std::string command;
-            size_t pos;
-            while ((pos = receive_buffer.find('\n')) != std::string::npos)
-            {
-
-                command = receive_buffer.substr(0, pos);
-                receive_buffer.erase(0, pos + 1);
-
-                std::cout << "Received command: " << command << "\n";
-
-                Command cmd = parser.parse(command);
-
-                std::string response = executor.execute(cmd);
-
-                response += "\n";
-
-                int bytes_sent = send(
-                    client_fd,
-                    response.c_str(),
-                    static_cast<int>(response.size()),
-                    0);
-
-                if (bytes_sent == SOCKET_ERROR)
-                {
-                    std::cerr << "Send failed\n";
-                    break;
-                }
-            }
-        }
-        else if (bytes_received == 0)
-        {
-            std::cout << "Client disconnected\n";
-            break;
-        }
-        else
-        {
-            std::cerr << "Receive failed. Error: "
-                      << WSAGetLastError()
-                      << '\n';
-
-            break;
-        }
+        client_thread.detach();
     }
 
-    // 8. Cleanup
-    closesocket(client_fd);
-    closesocket(server_fd);
 
     WSACleanup();
 

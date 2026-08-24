@@ -3,6 +3,55 @@
 
 #include <iostream>
 #include <cstring>
+#include <string>
+
+
+std::string receive_response(
+    SOCKET client_socket,
+    std::string &receive_buffer)
+{
+    while (true)
+    {
+        size_t pos = receive_buffer.find('\n');
+
+        if (pos != std::string::npos)
+        {
+            std::string response =
+                receive_buffer.substr(0, pos);
+
+            receive_buffer.erase(0, pos + 1);
+
+            return response;
+        }
+
+        char buffer[1024];
+
+        int bytes_received = recv(
+            client_socket,
+            buffer,
+            sizeof(buffer),
+            0);
+
+        if (bytes_received > 0)
+        {
+            receive_buffer.append(
+                buffer,
+                bytes_received);
+        }
+        else if (bytes_received == 0)
+        {
+            return "SERVER_DISCONNECTED";
+        }
+        else
+        {
+            std::cerr << "Receive failed: "
+                      << WSAGetLastError()
+                      << '\n';
+
+            return "RECEIVE_ERROR";
+        }
+    }
+}
 
 int main()
 {
@@ -53,101 +102,59 @@ int main()
     std::cout << "Connected to server!\n";
 
     // Send message
-    const char *message1 = "SET name Vishal\n";
+    std::string command;
+    std::string receive_buffer;
 
-    const char *message2 = "GET name\n";
-
-    const char *message3 = "SET city Mumbai\n";
-
-    send(
-        client_socket,
-        message1,
-        static_cast<int>(std::strlen(message1)),
-        0);
-
-        char buffer[1024];
-
-    int bytes_received = recv(
-        client_socket,
-        buffer,
-        sizeof(buffer) - 1,
-        0);
-
-    if (bytes_received > 0)
+    while (true)
     {
-        buffer[bytes_received] = '\0';
+        std::cout << "> ";
+
+        if (!std::getline(std::cin, command))
+        {
+            break;
+        }
+
+        if (command == "exit")
+        {
+            break;
+        }
+
+        command += '\n';
+
+        int bytes_sent = send(
+            client_socket,
+            command.c_str(),
+            static_cast<int>(command.size()),
+            0);
+
+        if (bytes_sent == SOCKET_ERROR)
+        {
+            std::cerr << "Send failed: "
+                      << WSAGetLastError()
+                      << '\n';
+            break;
+        }
+
+        std::string response =
+            receive_response(
+                client_socket,
+                receive_buffer);
+
+        if (response == "SERVER_DISCONNECTED")
+        {
+            std::cout << "Server disconnected\n";
+            break;
+        }
+
+        if (response == "RECEIVE_ERROR")
+        {
+            break;
+        }
 
         std::cout << "Server: "
-                  << buffer
+                  << response
                   << '\n';
     }
-    else if (bytes_received == 0)
-    {
-        std::cout << "Server disconnected\n";
-    }
-    else
-    {
-        std::cerr << "Receive failed\n";
-    }
-    send(
-        client_socket,
-        message3,
-        static_cast<int>(std::strlen(message3)),
-        0);
-
-    memset(buffer, 0, sizeof(buffer));
-    bytes_received = recv(
-        client_socket,
-        buffer,
-        sizeof(buffer) - 1,
-        0);
-
-    if (bytes_received > 0)
-    {
-        buffer[bytes_received] = '\0';
-
-        std::cout << "Server: "
-                  << buffer
-                  << '\n';
-    }
-    else if (bytes_received == 0)
-    {
-        std::cout << "Server disconnected\n";
-    }
-    else
-    {
-        std::cerr << "Receive failed\n";
-    }
-
-    send(
-        client_socket,
-        message2,
-        static_cast<int>(std::strlen(message2)),
-        0);
-
-    memset(buffer, 0, sizeof(buffer));
-    bytes_received = recv(
-        client_socket,
-        buffer,
-        sizeof(buffer) - 1,
-        0);
-    if (bytes_received > 0)
-    {
-        buffer[bytes_received] = '\0';
-
-        std::cout << "Server: "
-                  << buffer
-                  << '\n';
-    }
-    else if (bytes_received == 0)
-    {
-        std::cout << "Server disconnected\n";
-    }
-    else
-    {
-        std::cerr << "Receive failed\n";
-    }
-
     // Cleanup
     closesocket(client_socket);
     WSACleanup();
