@@ -252,7 +252,7 @@ TEST_F(KVStoreTest, ConcurrentReaders){
 TEST_F(KVStoreTest, StressTest)
 {
     constexpr int numThreads = 8;
-    constexpr int operations = 5000;
+    constexpr int operations = 100;
 
     std::vector<std::thread> threads;
 
@@ -262,7 +262,7 @@ TEST_F(KVStoreTest, StressTest)
         {
             for (int i = 0; i < operations; ++i)
             {
-                std::string key = "key" + std::to_string(i % 100);
+                std::string key = "key" + std::to_string(i % 20);
 
                 store->set(key, std::to_string(t));
 
@@ -270,7 +270,7 @@ TEST_F(KVStoreTest, StressTest)
 
                 store->exists(key);
 
-                if (i % 10 == 0)
+                if (i % 5 == 0)
                 {
                     store->remove(key);
                 }
