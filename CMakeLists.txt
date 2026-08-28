@@ -18,6 +18,7 @@ add_library(
     src/server/tcp_server.cpp
     src/parser/command_parser.cpp
     src/server/executor.cpp
+    src/server/replica_client.cpp
 )
 
 target_include_directories(
@@ -33,11 +34,23 @@ add_executable(
     src/main.cpp
 )
 
+add_executable(
+    kv-store-replica
+    src/main_replica.cpp
+)
+
 target_link_libraries(
     kv-store
     PRIVATE
     kvstore_lib
 )
+
+target_link_libraries(
+    kv-store-replica
+    PRIVATE
+    kvstore_lib
+)
+
 
 # ---------------- Tests ----------------
 

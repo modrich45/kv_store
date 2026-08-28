@@ -9,7 +9,14 @@ int main(){
         "wal.txt"
     );
 
-    Executor exeutor(store);
+    ReplicaClient replica_client("127.0.0.1",8081);
+
+    if (!replica_client.connect()){
+        std::cerr << "Failed to connect to replica\n";
+        return 1;
+    }
+
+    Executor exeutor(store,&replica_client);
 
     TCPServer server(8080, exeutor);
 

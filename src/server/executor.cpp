@@ -1,6 +1,6 @@
 #include "server/executor.h"
 
-Executor:: Executor(KVStore &store): store_(store){
+Executor:: Executor(KVStore &store, ReplicaClient* replica_client): store_(store),replica_client_(replica_client){
 
 }
 
@@ -8,6 +8,12 @@ std::string Executor:: executeCommand(const Command &cmd){
     switch (cmd.type){
         case CommandType::SET:{
             store_.set(cmd.key, cmd.value);
+
+            if (replica_client_ != nullptr){
+                if (!replica_client_->set(cmd.key,cmd.value)){
+                    return "ERROR Replica failed\n";
+                }
+            }
 
             return "Data saved successfully\n";
         }
@@ -24,6 +30,12 @@ std::string Executor:: executeCommand(const Command &cmd){
         case CommandType::REMOVE:{
             bool removed = store_.remove(cmd.key);
 
+            if (replica_client_ != nullptr){
+                if (!replica_client_->remove(cmd.key)){
+                    return "ERROR Replica failed\n";
+                }
+            }
+
             return removed? "Data deleted successfully\n": "NOT_FOUND\n";
         }
 
@@ -33,6 +45,12 @@ std::string Executor:: executeCommand(const Command &cmd){
 
         case CommandType::CLEAR:{
             store_.clear();
+
+            if (replica_client_ != nullptr){
+                if (!replica_client_->clear()){
+                    return "ERROR Replica failed\n";
+                }
+            }
 
             return "Data cleared successfully\n";
         }

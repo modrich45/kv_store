@@ -23,7 +23,7 @@ bool TCPServer:: start(){
     serverAddress.sin_family=AF_INET;
 
     // Accept connections from any network interface
-    serverAddress.sin_addr.s_addr=INADDR_ANY;
+    serverAddress.sin_addr.s_addr=INADDR_ANY; // already a binary format
     serverAddress.sin_port=htons(port_); // We converted port to
     
     // Wrap socket to address

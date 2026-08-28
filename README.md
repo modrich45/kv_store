@@ -1,22 +1,7 @@
-# KV Store
+# Replication strategy
+    Primary + Replica
+    Get and Set for now both will be performed on primary, replica is for fault tolerance
 
-A production-style in-memory key-value store built in Modern C++20.
-
-## Features (Planned)
-
-- In-memory storage
-- Persistence (WAL)
-- Thread safety
-- TCP Server
-- Replication
-- Sharding
-
-## Format
-
-- **Snapshot**
-    key=value
-
-- **WAL**
-    SET key value
-    REMOVE key
-    CLEAR
+# Flow for replica
+    req from client-> primary node -> replica client -> replica node
+    We will have basic failover, but this project will still have split brain problem.
