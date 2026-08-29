@@ -1,3 +1,0 @@
-project=kv
-age=23
-name=saksham

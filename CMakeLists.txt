@@ -19,6 +19,8 @@ add_library(
     src/parser/command_parser.cpp
     src/server/executor.cpp
     src/server/replica_client.cpp
+    src/server/router.cpp
+    src/server/tcp_client.cpp
 )
 
 target_include_directories(
@@ -35,8 +37,33 @@ add_executable(
 )
 
 add_executable(
-    kv-store-replica
-    src/main_replica.cpp
+    kv-store-replica1
+    src/main_replica1.cpp
+)
+
+add_executable(
+    kv-store-replica2
+    src/main_replica2.cpp
+)
+
+add_executable(
+    kv-store-replica3
+    src/main_replica3.cpp
+)
+
+add_executable(
+    kv-store-server1
+    src/main_server1.cpp
+)
+
+add_executable(
+    kv-store-server2
+    src/main_server2.cpp
+)
+
+add_executable(
+    kv-store-server3
+    src/main_server3.cpp
 )
 
 target_link_libraries(
@@ -46,7 +73,37 @@ target_link_libraries(
 )
 
 target_link_libraries(
-    kv-store-replica
+    kv-store-replica1
+    PRIVATE
+    kvstore_lib
+)
+
+target_link_libraries(
+    kv-store-replica2
+    PRIVATE
+    kvstore_lib
+)
+
+target_link_libraries(
+    kv-store-replica3
+    PRIVATE
+    kvstore_lib
+)
+
+target_link_libraries(
+    kv-store-server1
+    PRIVATE
+    kvstore_lib
+)
+
+target_link_libraries(
+    kv-store-server2
+    PRIVATE
+    kvstore_lib
+)
+
+target_link_libraries(
+    kv-store-server3
     PRIVATE
     kvstore_lib
 )

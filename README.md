@@ -4,4 +4,4 @@
 
 # Flow for replica
     req from client-> primary node -> replica client -> replica node
-    We will have basic failover, but this project will still have split brain problem.
+    We are using repliction just for data recovery

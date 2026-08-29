@@ -1,0 +1,2 @@
+age=23
+life=good

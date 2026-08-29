@@ -5,13 +5,13 @@
 
 int main(){   
     KVStore store(
-        "replica_snapshot.txt",
-        "replica_wal.txt"
+        "replica_snapshot2.txt",
+        "replica_wal2.txt"
     );
 
     Executor exeutor(store,NULL);
 
-    TCPServer server(8081, exeutor);
+    TCPServer server(8092, exeutor);
 
     if (!server.start()) return 1;
 

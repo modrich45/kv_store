@@ -1,32 +1,30 @@
-#include "server/tcp_server.h"
-#include<sys/socket.h>
+#include "server/router.h"
+#include <sys/socket.h>
+#include <iostream>
 #include <netinet/in.h>
-#include<iostream>
 #include <unistd.h>
 #include<thread>
+#include<functional>
+#include<parser/command_parser.h>
 
-TCPServer :: TCPServer(int port, Executor &executor) : serverSocket_(-1),port_(port),executor_(executor){
-}   
+Router :: Router(const int port, std::vector<TCPClient*> tcp_clients) : serverSocket_(-1),port_(port),tcp_clients_(tcp_clients){
+}
 
-bool TCPServer:: start(){
-    // Create socket, serverSocket_ wil be assigned a file descripter
+bool Router:: start(){
     serverSocket_=socket(AF_INET,SOCK_STREAM,0);
 
     if(serverSocket_==-1){
-        std::cerr<<"Socket creation failed\n";
+        std::cerr<<"Router creation failed\n";
         return false;
     }
 
-    // Create server address
     sockaddr_in serverAddress{};
 
     serverAddress.sin_family=AF_INET;
 
-    // Accept connections from any network interface
-    serverAddress.sin_addr.s_addr=INADDR_ANY; // already a binary format
-    serverAddress.sin_port=htons(port_); // We converted port to
+    serverAddress.sin_addr.s_addr=INADDR_ANY;
+    serverAddress.sin_port=htons(port_);
     
-    // Wrap socket to address
     if(bind(serverSocket_,reinterpret_cast<sockaddr*>(&serverAddress),sizeof(serverAddress))==-1){
         std:: cerr<<"Bind failed\n";
 
@@ -36,8 +34,7 @@ bool TCPServer:: start(){
         return false;
     }
 
-    // Listening
-    if(listen(serverSocket_,SOMAXCONN)){
+    if(listen(serverSocket_,SOMAXCONN)==-1){
         std:: cerr<<"Listen failed\n";
 
         close(serverSocket_);
@@ -51,15 +48,11 @@ bool TCPServer:: start(){
     return true;
 }
 
-void TCPServer::run(){
-    running_=true;
-
-    while(running_){
-
+void Router::run(){
+    while(true){
         sockaddr_in clientAddress{};
         socklen_t clientAddressSize = sizeof(clientAddress);
 
-        // When a client comes OS instructs to fill this clientAddress
         int clientSocket=accept(serverSocket_,reinterpret_cast<sockaddr*>(&clientAddress),&clientAddressSize);
         
         if(clientSocket==-1){
@@ -67,18 +60,18 @@ void TCPServer::run(){
             return;
         }
         
-        std::thread(&TCPServer::handleClient,this,clientSocket).detach();
+        std::thread(&Router::handleClient,this,clientSocket).detach();
     }
 }
 
-void TCPServer:: stop(){
+void Router:: stop(){
     if(serverSocket_!=-1){
         close(serverSocket_);
         serverSocket_=-1;
     }
 }
 
-void TCPServer:: handleClient(int clientSocket){
+void Router:: handleClient(int clientSocket){
     std::cout<<"Client connected\n";
         
     char buffer[1024];
@@ -101,7 +94,6 @@ void TCPServer:: handleClient(int clientSocket){
         receiveBuffer.append(buffer, bytesReceived);
         std::size_t newlinePosition;
         
-        // This will execute only if \n is found because client can complete a single command in more than 1 requests
         while ((newlinePosition = receiveBuffer.find('\n'))!= std::string::npos){
             std::string line =receiveBuffer.substr(0, newlinePosition);
             receiveBuffer.erase(0,newlinePosition + 1);
@@ -110,8 +102,40 @@ void TCPServer:: handleClient(int clientSocket){
             
             try{
                 Command command =CommandParser::parse(line);
+                std::string response;
                 
-                std::string response =executor_.executeCommand(command);
+                int N=tcp_clients_.size();
+
+                if(N==0) throw std::runtime_error("No shards available");
+                std:: string fullLine=line+"\n";
+
+                // handle command conaining key
+                if (command.type == CommandType::SET ||command.type == CommandType::GET ||
+                    command.type == CommandType::REMOVE ||command.type == CommandType::EXISTS){
+                    int node=getNode(command.key);
+
+
+                    response=tcp_clients_[node]->sendCommand(fullLine);
+                }
+                // handle command not containing key
+                else if(command.type== CommandType:: SIZE){
+                    int cnt=0;
+
+                    // stoi is giving error right now
+                    for(int i=0;i<N;i++){
+                        cnt+=stoi(tcp_clients_[i]->sendCommand(fullLine));
+                    }
+
+                    response="Size is: "+cnt;
+                }
+                else if(command.type==CommandType::CLEAR){
+                    for(int i=0;i<N;i++){
+                        tcp_clients_[i]->sendCommand(fullLine);
+                    }
+
+                    response="Command executed successfully";
+                }
+
                 
                 send(clientSocket,response.c_str(),response.size(),0);
             }
@@ -121,6 +145,11 @@ void TCPServer:: handleClient(int clientSocket){
             }
         }
     }
-    
-    close(clientSocket);
+}
+
+int Router:: getNode(std:: string &key){
+    std:: hash<std::string> string_hasher;
+    int N=tcp_clients_.size();
+
+    return string_hasher(key)%N;
 }
