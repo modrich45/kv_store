@@ -121,12 +121,11 @@ void Router:: handleClient(int clientSocket){
                 else if(command.type== CommandType:: SIZE){
                     int cnt=0;
 
-                    // stoi is giving error right now
                     for(int i=0;i<N;i++){
-                        cnt+=stoi(tcp_clients_[i]->sendCommand(fullLine));
+                        cnt+=std::stoi(tcp_clients_[i]->sendCommand(fullLine));
                     }
 
-                    response="Size is: "+cnt;
+                    response=std::to_string(cnt);
                 }
                 else if(command.type==CommandType::CLEAR){
                     for(int i=0;i<N;i++){

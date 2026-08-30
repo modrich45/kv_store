@@ -56,7 +56,7 @@ std::string Executor:: executeCommand(const Command &cmd){
         }
 
         case CommandType::SIZE:{
-            return "Number of kv pairs are :"+std::to_string(store_.size()) + "\n";
+            return std::to_string(store_.size()) + "\n";
         }
     }
 
