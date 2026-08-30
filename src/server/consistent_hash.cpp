@@ -1,4 +1,5 @@
 #include "server/consistent_hash.h"
+#include<iostream>
 
 void ConsistentHash::addNode(int node){
     for (int i = 0; i < VIRTUAL_NODES; ++i){
