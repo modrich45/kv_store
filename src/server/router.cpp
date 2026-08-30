@@ -8,6 +8,9 @@
 #include<parser/command_parser.h>
 
 Router :: Router(const int port, std::vector<TCPClient*> tcp_clients) : serverSocket_(-1),port_(port),tcp_clients_(tcp_clients){
+    for(int i=0;i<tcp_clients_.size();i++){
+        hash_ring_.addNode(i);
+    }
 }
 
 bool Router:: start(){
@@ -112,8 +115,7 @@ void Router:: handleClient(int clientSocket){
                 // handle command conaining key
                 if (command.type == CommandType::SET ||command.type == CommandType::GET ||
                     command.type == CommandType::REMOVE ||command.type == CommandType::EXISTS){
-                    int node=getNode(command.key);
-
+                    int node=hash_ring_.getNode(command.key);
 
                     response=tcp_clients_[node]->sendCommand(fullLine);
                 }
@@ -144,11 +146,4 @@ void Router:: handleClient(int clientSocket){
             }
         }
     }
-}
-
-int Router:: getNode(std:: string &key){
-    std:: hash<std::string> string_hasher;
-    int N=tcp_clients_.size();
-
-    return string_hasher(key)%N;
 }
