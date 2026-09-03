@@ -390,6 +390,6 @@ The current implementation has progressed from a local in-memory store to a **ne
 
 ## 👨‍💻 Author
 
-**Vishal Kumar**
+**Vishal Kumar And Saksham SuralWal**
 
 Built from scratch in C++20 as a hands-on exploration of systems programming and distributed systems.
