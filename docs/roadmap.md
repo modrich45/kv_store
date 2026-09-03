@@ -44,10 +44,39 @@
 
 ---
 
-## Phase 5
-- [ ] TCP Server
-- [ ] Client protocol
-- [ ] Command parser
+## Phase 5 ✅
+- [x] TCP Server
+- [x] Client protocol
+- [x] Command parser
+
+                  TCP Client
+                     │
+                  send()
+                     │
+                     ▼
+              ┌──────────────┐
+              │  TCP Server  │
+              └──────┬───────┘
+                     │
+                  accept()
+                     │
+          ┌──────────┼──────────┐
+          ▼          ▼          ▼
+       Thread A   Thread B   Thread C
+          │          │          │
+          └──────────┼──────────┘
+                     ▼
+                CommandParser
+                     │
+                     ▼
+               CommandExecutor
+                     │
+                     ▼
+                 KVStore
+                     │
+             ┌───────┴───────┐
+             ▼               ▼
+            WAL           Snapshot
 
 ---
 

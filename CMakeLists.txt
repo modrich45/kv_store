@@ -17,6 +17,7 @@ add_library(
     src/kv/wal.cpp
     src/kv/command_parser.cpp
     src/kv/command_executor.cpp
+    src/kv/replication_manager.cpp
 )
 
 target_include_directories(

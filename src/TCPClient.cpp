@@ -53,8 +53,15 @@ std::string receive_response(
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    int port = 8080;
+
+    if (argc > 1)
+    {
+        port = std::stoi(argv[1]);
+    }
+
     // Initialize Winsock
     WSADATA wsaData;
 
@@ -78,7 +85,7 @@ int main()
     sockaddr_in server_address{};
 
     server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(8080);
+    server_address.sin_port = htons(port);
 
     inet_pton(
         AF_INET,
@@ -99,7 +106,7 @@ int main()
         return 1;
     }
 
-    std::cout << "Connected to server!\n";
+    std::cout << "Connected to server on port " << port << "!\n";
 
     // Send message
     std::string command;

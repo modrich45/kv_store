@@ -6,3 +6,9 @@ test_snapshot.txt
 test_wal.txt
 snapshot.txt
 wal.txt
+snapshot_8080.txt
+snapshot_8081.txt
+snapshot_8082.txt
+wal_8080.txt
+wal_8081.txt
+wal_8082.txt

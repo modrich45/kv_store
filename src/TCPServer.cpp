@@ -8,10 +8,12 @@
 #include "kv/command_executor.h"
 #include <thread>
 #include <functional>
+#include "kv/replication_manager.h"
 
 void handle_client(
     SOCKET client_fd,
-    KVStore &store)
+    KVStore &store,
+    ReplicationManager *replication_manager)
 {
     std::cout << "Client handler started\n";
 
@@ -52,11 +54,25 @@ void handle_client(
                     << command
                     << '\n';
 
-                Command cmd =
-                    parser.parse(command);
+                bool is_replication = command.rfind("REPL ", 0) == 0;
 
-                std::string response =
-                    executor.execute(cmd);
+                if (is_replication)
+                {
+                    command = command.substr(5);
+                }
+
+                Command cmd = parser.parse(command);
+
+                std::string response = executor.execute(cmd);
+
+                if (!is_replication &&
+                    replication_manager != nullptr &&
+                    (cmd.type == CommandType::SET ||
+                     cmd.type == CommandType::REMOVE ||
+                     cmd.type == CommandType::CLEAR))
+                {
+                    replication_manager->replicate(command);
+                }
 
                 response += '\n';
 
@@ -101,8 +117,14 @@ void handle_client(
     std::cout << "Client handler stopped\n";
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    int port = 8080;
+
+    if (argc > 1)
+    {
+        port = std::stoi(argv[1]);
+    }
     // 1. Initialize Winsock
     WSADATA wsaData;
 
@@ -126,7 +148,7 @@ int main()
     sockaddr_in server_address{};
 
     server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(8080);
+    server_address.sin_port = htons(port);
     server_address.sin_addr.s_addr = INADDR_ANY;
 
     // 4. Bind
@@ -150,11 +172,23 @@ int main()
         return 1;
     }
 
-    std::cout << "Server listening on port 8080...\n";
+    std::cout << "Server listening on port " << port << "...\n";
 
     // 6. Accept client
+    std::string snapshot_file = "snapshot_" + std::to_string(port) + ".txt";
+    std::string wal_file = "wal_" + std::to_string(port) + ".txt";
+    KVStore store(snapshot_file, wal_file);
 
-    KVStore store("snapshot.txt", "wal.txt");
+    ReplicationManager replication_manager;
+    ReplicationManager *manager = nullptr;
+
+    if (port == 8080)
+    {
+        replication_manager.add_replica("127.0.0.1", 8081);
+        replication_manager.add_replica("127.0.0.1", 8082);
+
+        manager = &replication_manager;
+    }
 
     // 7. Handle clients in separate threads
     while (true)
@@ -180,11 +214,10 @@ int main()
         std::thread client_thread(
             handle_client,
             client_fd,
-            std::ref(store));
+            std::ref(store), manager);
 
         client_thread.detach();
     }
-
 
     WSACleanup();
 
