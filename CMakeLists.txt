@@ -18,6 +18,7 @@ add_library(
     src/kv/command_parser.cpp
     src/kv/command_executor.cpp
     src/kv/replication_manager.cpp
+    src/kv/consistent_hashing.cpp
 )
 
 target_include_directories(
@@ -68,6 +69,7 @@ add_executable(
     tests/snapshot_test.cpp
     tests/wal_test.cpp
     tests/command_parser_test.cpp
+    tests/consistent_hashing_test.cpp
 )
 
 target_link_libraries(
